@@ -10,38 +10,56 @@ namespace TaskbarPerformance
 {
     static class Program
     {
-        private static PerformanceCounter perCounter = new PerformanceCounter() { CategoryName = "Processor", CounterName= "% Processor time", InstanceName = "_Total"};
-        //private static Random rand = new();
-        public static readonly PerformanceWindow pwin;
-        /// <summary>
-        ///  The main entry point for the application.
-        /// </summary>
-        /// 
-
+        private static readonly Timer timer;
+        public static readonly PerformanceWindow cpuPerformance;
+        public static readonly PerformanceWindow ramPerformance;
         static Program()
         {
             Application.SetHighDpiMode(HighDpiMode.SystemAware);
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-
-            pwin = new(val => val switch
-            {
-                100 => TaskbarProgressBarState.Error,
-                > 75 => TaskbarProgressBarState.Paused,
-                _ => TaskbarProgressBarState.Normal,
-            }, () => (sbyte)perCounter.NextValue()
-            )
-            { 
-                Prefix = "CPU: ",
-                Suffix = " %"
-            };
+            timer = new() { Interval = 1000, Enabled = true };
+            cpuPerformance = new(CpuStateMapper, CpuValueProvider, "CPU: {0} %", timer);
+            ramPerformance = new(RamStateMapper, RamValueProvider, "RAM: {0} GB", timer);
         }
+
+        /// <summary>
+        ///  The main entry point for the application.
+        /// </summary>
         [STAThread]
         static void Main()
         {
-        
-            Application.Run(pwin);
-
+            Application.Run(new AppContext(new() { cpuPerformance ,ramPerformance}));
         }
+
+        #region CPU
+        private static readonly PerformanceCounter perCounter = new()
+        {
+            CategoryName = "Processor",
+            CounterName = "% Processor time",
+            InstanceName = "_Total"
+        };
+
+        private static (float,float) CpuValueProvider() => ((float)Math.Floor(perCounter.NextValue()), 100);
+
+        private static TaskbarProgressBarState CpuStateMapper(float value) => value switch
+        {
+            100 => TaskbarProgressBarState.Error,
+            > 75 => TaskbarProgressBarState.Paused,
+            _ => TaskbarProgressBarState.Normal,
+        };
+        #endregion
+
+        #region RAM
+        //RAM not acually implemented right
+        private static (float,float) RamValueProvider() => (perCounter.NextValue(), 100);
+
+        private static TaskbarProgressBarState RamStateMapper(float value) => value switch
+        {
+            100 => TaskbarProgressBarState.Error,
+            > 75 => TaskbarProgressBarState.Paused,
+            _ => TaskbarProgressBarState.Normal,
+        };
+        #endregion
     }
 }

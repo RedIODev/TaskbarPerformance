@@ -11,48 +11,43 @@ using Microsoft.WindowsAPICodePack.Taskbar;
 
 namespace TaskbarPerformance
 {
+    public delegate TaskbarProgressBarState StateMapper(float value); 
+    public delegate (float,float) ValueProvider();
+
     public partial class PerformanceWindow : Form
     {
-        private static readonly TaskbarManager tbm = TaskbarManager.Instance;
-        private readonly Timer timer = new() { Interval = 1000, Enabled = true };
+        public bool StateFixed { get; set; }
 
-        public delegate TaskbarProgressBarState StateHandler(sbyte value);
-        public delegate sbyte StateProvider();
-        public sbyte MaxValue { get; } = 100;
-        public int UpdateInterval { get => timer.Interval; set => timer.Interval = value; }
-        public string Prefix { get; set; }
-        public string Suffix { get; set; }
-        public StateHandler Handler { get; set; }
-        public StateProvider Provider { get; set; }
+        private readonly StateMapper stateMapper;
+        private readonly ValueProvider valueProvider;
+        private readonly string format;
 
-        public TaskbarProgressBarState ProgressBarState { set {
-                if (IsDisposed)
-                    return;
-                tbm.SetProgressState(value, Handle);
-            }
-        }
-
-        public sbyte ProgressBarValue { set {
-                ProgressBarState = Handler(value);
-                tbm.SetProgressValue(value, MaxValue, Handle);
-            }
-        }
-
-        public void Timer_Tick(object sender, EventArgs e)
-        {
-            sbyte value = Provider();
-            ProgressBarValue = value;
-            Text = $"{Prefix}{value}{Suffix}";
-        }
-
-        public PerformanceWindow(StateHandler handler, StateProvider provider)
+        public PerformanceWindow(StateMapper stateMapper, ValueProvider valueProvider, string format, Timer timer)
         {
             InitializeComponent();
-            Handler = handler;
-            Provider = provider;
-            timer.Tick += Timer_Tick;
+            this.stateMapper = stateMapper;
+            this.valueProvider = valueProvider;
+            this.format = format;
+            timer.Tick += ChangeValue;
         }
 
-        
+        public void ChangeState(TaskbarProgressBarState state)
+        {
+            if (!TaskbarManager.IsPlatformSupported)
+                return;
+            TaskbarManager.Instance.SetProgressState(state, Handle);
+        }
+
+        private void ChangeValue(object sender, EventArgs e)
+        {
+            var (value, maxValue) = valueProvider();
+            Text = string.Format(format, value);
+            if (!TaskbarManager.IsPlatformSupported)
+                return;
+            var tbm = TaskbarManager.Instance;
+            tbm.SetProgressValue(Convert.ToInt32(value), Convert.ToInt32(maxValue), Handle);
+            if(!StateFixed)
+                tbm.SetProgressState(stateMapper(value), Handle);
+        }
     }
 }
