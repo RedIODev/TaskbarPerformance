@@ -1,7 +1,7 @@
 ﻿
 namespace TaskbarPerformance
 {
-    partial class PerformanceWindow
+    partial class AbstractPerformanceWindow
     {
         /// <summary>
         /// Required designer variable.
@@ -31,15 +31,14 @@ namespace TaskbarPerformance
         {
             this.SuspendLayout();
             // 
-            // PerformanceWindow
+            // AbstractPerformanceWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(13F, 32F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Red;
-            this.ClientSize = new System.Drawing.Size(19, 21);
+            this.ClientSize = new System.Drawing.Size(10, 10);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
-            this.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
-            this.Name = "PerformanceWindow";
+            this.Name = "AbstractPerformanceWindow";
             this.TransparencyKey = System.Drawing.Color.Red;
             this.ResumeLayout(false);
 

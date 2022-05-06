@@ -7,9 +7,9 @@ using System.Windows.Forms;
 
 namespace TaskbarPerformance
 {
-    class AppContext : ApplicationContext
+    public class AppContext : ApplicationContext
     {
-        public AppContext(List<PerformanceWindow> performanceWindows)
+        public AppContext(List<AbstractPerformanceWindow> performanceWindows)
         {
             foreach (var window in performanceWindows)
                 window.FormClosed += OnFormClosed;
